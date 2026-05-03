@@ -1,4 +1,4 @@
-# Holo-Wind — v1.22.0
+# Morrowind: Pip-Boy Edition — v1.22.0
 
 **Morrowind. On your Pip-Boy. For real.**
 
