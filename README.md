@@ -74,7 +74,7 @@ Before running the installer, copy your entire `%USERPROFILE%\Documents\My Games
 
 - **OpenMW** — Open-source Morrowind engine re-implementation by the OpenMW Contributors. Licensed under [GPL v3](https://gnu.org/licenses/gpl-3.0.txt). This mod ships a modified build of OpenMW 0.50 that adds a shared-memory framebuffer and input bridge. The unmodified source is at [github.com/OpenMW/openmw](https://github.com/OpenMW/openmw).
 - **F4SE** — Fallout 4 Script Extender by the F4SE Team. [nexusmods.com/fallout4/mods/42147](https://nexusmods.com/fallout4/mods/42147)
-- **Holo-Wind** — concept, F4SE plugin, installer, and integration code by [rpgking117](https://youtube.com/@rpgking117)
+- **Morrowind: PipBoy Edition** — concept, F4SE plugin, installer, and integration code by [rpgking117](https://youtube.com/@rpgking117)
 
 ---
 
