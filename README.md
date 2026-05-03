@@ -2,9 +2,7 @@
 
 **Morrowind. On your Pip-Boy. For real.**
 
-Holo-Wind streams The Elder Scrolls III: Morrowind live into the Fallout 4 Pip-Boy screen using a custom-modified build of OpenMW 0.50 — bridged directly into the game engine via shared memory and a dedicated F4SE plugin. Insert the Morrowind Holotape, open your Pip-Boy, and Vvardenfell appears on your wrist.
-
-No emulation. No video. **Live engine output.**
+Holo-Wind streams The Elder Scrolls III: Morrowind live into the Fallout 4 Pip-Boy screen using a custom-modified build of OpenMW 0.50 — bridged directly into the game engine via shared memory and a dedicated F4SE plugin. Insert the Morrowind Holotape, open your Pip-Boy, and the rest is up to you..
 
 ---
 
@@ -14,7 +12,7 @@ No emulation. No video. **Live engine output.**
 
 ## What It Does
 
-OpenMW runs in a hidden window locked to 876×700 and streams its framebuffer directly into Fallout 4's Pip-Boy display in real time. A custom F4SE plugin handles the holotape trigger, the shared-memory bridge, and input passthrough so keyboard controls reach Morrowind while you're in-game. You play Morrowind on your arm. That's the whole bit.
+OpenMW runs in a hidden window locked to 876x700 which gets upscaled to 1024x1024 and streams its framebuffer directly into Fallout 4's Pip-Boy display in real time. A custom F4SE plugin handles the holotape trigger, the shared-memory bridge, and input passthrough so keyboard controls reach Morrowind while you're in-game.
 
 ---
 
@@ -27,6 +25,7 @@ OpenMW runs in a hidden window locked to 876×700 and streams its framebuffer di
 | Fallout 4 (Steam) | Must own |
 | The Elder Scrolls III: Morrowind (Steam) | Must own |
 | [F4SE — Fallout 4 Script Extender](https://nexusmods.com/fallout4/mods/42147) | Must install before launching |
+| Most OpenMW compatible mods should just work |
 
 ---
 
@@ -40,7 +39,12 @@ The installer **overwrites** these files:
 %USERPROFILE%\Documents\My Games\OpenMW\shaders.yaml
 ```
 
-It forces a fixed 876×700 windowed resolution and disables the cursor and crosshair. **These changes will break standalone OpenMW.**
+It forces a fixed 876×700 windowed resolution and disables the cursor and crosshair. **These changes will "break" standalone OpenMW.**
+
+**DISCLAIMER**
+This version of OpenMW is tailered to this project. 
+You may not be able to run it normally on the desktop and if you do manager
+it may break features of this mod. 
 
 Before running the installer, copy your entire `%USERPROFILE%\Documents\My Games\OpenMW\` folder somewhere safe.
 
