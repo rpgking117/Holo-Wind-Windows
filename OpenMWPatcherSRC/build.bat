@@ -1,20 +1,29 @@
 @echo off
 REM build.bat  --  Hollo-Wind Windows capture DLL builder
-REM Requires: MSVC 2019 Build Tools (x64)
+REM Requires: MSVC 2019+ Build Tools (x64)
 REM Run this AFTER placing SDL2_orig.dll in this folder
 REM (copy SDL2.dll from the OpenMW install, rename it SDL2_orig.dll)
 
 setlocal
 
-REM ---- Initialize MSVC 2019 x64 environment ----
-set "VCVARS=C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
-if not exist "%VCVARS%" (
-    echo ERROR: MSVC 2019 Build Tools not found.
-    echo Install via: Visual Studio Installer, MSVC v142 build tools ^(x64^)
+REM ---- Locate MSVC via vswhere ----
+set "VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
+if not exist "%VSWHERE%" (
+    echo ERROR: vswhere.exe not found.
+    echo Install Visual Studio 2017 or newer with C++ build tools, then retry.
     exit /b 1
 )
+for /f "usebackq tokens=*" %%i in (`"%VSWHERE%" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do (
+    set "VS_PATH=%%i"
+)
+if not defined VS_PATH (
+    echo ERROR: No Visual Studio installation with C++ build tools found.
+    echo Install the "MSVC v14x - VS 20xx C++ x64/x86 build tools" component.
+    exit /b 1
+)
+set "VCVARS=%VS_PATH%\VC\Auxiliary\Build\vcvars64.bat"
 call "%VCVARS%" >nul 2>&1
-echo MSVC 2019 x64 environment initialized.
+echo MSVC x64 environment initialized.
 
 REM ---- Generate SDL2 proxy DEF ----
 if not exist "SDL2_orig.dll" (

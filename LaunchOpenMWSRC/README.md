@@ -25,11 +25,13 @@ where the trigger file and watcher script live.
 
 ## Prerequisites
 
-**MSVC 2019 Build Tools (x64)** — `build.bat` initializes the environment via
-`vcvars64.bat` automatically. No Developer Command Prompt needed.
+**MSVC Build Tools (x64)** — Visual Studio 2019 or newer.
+
+`build.bat` uses `vswhere.exe` (ships with VS 2017+) to locate `vcvars64.bat`
+automatically. No Developer Command Prompt needed and no hardcoded VS paths.
 
 Install via: Visual Studio Installer → Individual Components →
-"MSVC v142 - VS 2019 C++ x64/x86 build tools"
+any "MSVC v14x C++ x64/x86 build tools"
 
 ## How to build
 

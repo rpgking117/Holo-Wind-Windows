@@ -79,5 +79,5 @@ build\
   Fallout4Custom.ini
 ```
 
-The full `build\` directory structure is already assembled at
-`C:\Users\NateD\Desktop\Morrowind_PipBoy_Edition\build\`.
+The full `build\` directory structure is produced by running `assemble.bat`
+from the MPBE_Source root.

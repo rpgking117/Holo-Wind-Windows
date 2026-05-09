@@ -42,12 +42,13 @@ create or edit them.
 
 ## Prerequisites
 
-**MSVC 2019 Build Tools (x64)**
+**MSVC Build Tools (x64)** — Visual Studio 2019 or newer.
 
-Install via: Visual Studio Installer → Individual Components → "MSVC v142 - VS 2019 C++ x64/x86 build tools"
+Install via: Visual Studio Installer → Individual Components → any "MSVC v14x C++ x64/x86 build tools".
 
-`build.bat` initializes the environment itself using `vcvars64.bat` — no Developer
-Command Prompt needed.
+`build.bat` uses `vswhere.exe` (ships with VS 2017+) to locate the correct
+`vcvars64.bat` automatically — no Developer Command Prompt needed and no
+hardcoded VS paths.
 
 **Python 3** — required to run `generate_proxy_def.py`.
 Optionally install the `pefile` package (`pip install pefile`) for faster export
@@ -55,8 +56,8 @@ reading; otherwise the script falls back to `dumpbin.exe` from MSVC.
 
 ## Getting SDL2_orig.dll
 
-`SDL2_orig.dll` must come from the **official OpenMW installation**. A copy from
-OpenMW 0.48.0 is included in this folder.
+`SDL2_orig.dll` must come from the **official OpenMW 0.50.0 installation**. A copy
+from OpenMW 0.50.0 is included in this folder.
 
 To get it from a fresh OpenMW install:
 1. Download and install OpenMW from https://openmw.org

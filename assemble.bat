@@ -2,7 +2,7 @@
 REM assemble.bat -- Assembles the full Morrowind_PipBoy_Edition distribution
 REM folder from already-built component outputs.
 REM
-REM Run this from C:\Users\NateD\Desktop\MPBE_Source\ AFTER building each
+REM Run this from the MPBE_Source root directory AFTER building each
 REM component in its own directory:
 REM
 REM   1. OpenMWPatcherSRC\build.bat      -> produces OpenMWPatcherSRC\SDL2.dll
