@@ -1,0 +1,20 @@
+ANTIVIRUS NOTE
+==============
+
+Your AV is going to flag this. That's expected, here's why.
+
+The mod hooks directly into Fallout 4's renderer at runtime, uses a proxy DLL
+that sits in front of the real SDL2, and the setup exe drops a PowerShell
+script to your temp folder and runs it. All three of those things are also
+things malware does. The AV isn't wrong to be suspicious, it just doesn't know
+what it's looking at.
+
+It costs money to have the binaries code signed and I am broke :/
+
+There's no actual malware here. The mod has to do all of this to make Morrowind
+show up inside a Pip-Boy -- there's no clean way to do it. Add the mod folder,
+your Fallout 4 folder, and your OpenMW folder to your AV exclusions before
+installing and you'll be fine.
+
+If you're not comfortable doing that, I get it, but the mod won't work without
+it. You are welcome to run these files through an Ai to double check what they do.
