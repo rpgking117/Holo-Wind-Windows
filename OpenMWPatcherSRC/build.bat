@@ -5,6 +5,7 @@ REM Run this AFTER placing SDL2_orig.dll in this folder
 REM (copy SDL2.dll from the OpenMW install, rename it SDL2_orig.dll)
 
 setlocal
+cd /d "%~dp0"
 
 REM ---- Locate MSVC via vswhere ----
 set "VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
@@ -13,7 +14,7 @@ if not exist "%VSWHERE%" (
     echo Install Visual Studio 2017 or newer with C++ build tools, then retry.
     exit /b 1
 )
-for /f "usebackq tokens=*" %%i in (`"%VSWHERE%" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do (
+for /f "usebackq tokens=*" %%i in (`"%VSWHERE%" -all -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do (
     set "VS_PATH=%%i"
 )
 if not defined VS_PATH (

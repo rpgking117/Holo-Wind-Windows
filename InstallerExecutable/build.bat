@@ -7,6 +7,7 @@ REM resource. When the user clicks Install the exe extracts it to a temp
 REM folder and runs it via PowerShell, passing the three game paths.
 
 setlocal
+cd /d "%~dp0"
 
 set "CSC=C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
 

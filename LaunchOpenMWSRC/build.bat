@@ -7,6 +7,7 @@ REM player presses F9. It starts morrowind_watcher.ps1 (detached) and writes
 REM the trigger file that tells the watcher to launch OpenMW.
 
 setlocal
+cd /d "%~dp0"
 
 REM ---- Locate MSVC via vswhere ----
 set "VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
@@ -15,7 +16,7 @@ if not exist "%VSWHERE%" (
     echo Install Visual Studio 2017 or newer with C++ build tools, then retry.
     exit /b 1
 )
-for /f "usebackq tokens=*" %%i in (`"%VSWHERE%" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do (
+for /f "usebackq tokens=*" %%i in (`"%VSWHERE%" -all -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do (
     set "VS_PATH=%%i"
 )
 if not defined VS_PATH (
