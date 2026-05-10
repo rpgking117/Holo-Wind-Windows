@@ -4,6 +4,9 @@
 
 Full source tree for **Morrowind: PipBoy Edition** (also known as Hollo-Wind).
 
+Feel Free to use this source as a guide to create new projects. All I ask 
+is that you provide proper credit. 
+
 This mod renders The Elder Scrolls III: Morrowind — running via OpenMW — live
 inside the Fallout 4 Pip-Boy screen. OpenMW runs as a hidden process; its
 framebuffer is captured by a proxy DLL, written to shared memory, and injected
