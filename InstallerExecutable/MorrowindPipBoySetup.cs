@@ -77,8 +77,19 @@ namespace MorrowindPipBoySetup
         const string PRODUCT = "Morrowind: PipBoy Edition";
         const string VERSION = "v1.0";
 
+        protected override CreateParams CreateParams
+        {
+            get
+            {
+                CreateParams cp = base.CreateParams;
+                cp.ExStyle |= 0x02000000; // WS_EX_COMPOSITED — single-pass paint, eliminates artifacts
+                return cp;
+            }
+        }
+
         public SetupForm()
         {
+            SuspendLayout();
             Text            = PRODUCT + " — Setup  " + VERSION;
             ClientSize      = new Size(540, 440);
             FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -87,6 +98,7 @@ namespace MorrowindPipBoySetup
             StartPosition   = FormStartPosition.CenterScreen;
             BackColor       = Color.White;
             Font            = new Font("Segoe UI", 9F);
+            DoubleBuffered  = true;
 
             BuildHeader();
             BuildRule(DockStyle.Top);
@@ -102,6 +114,7 @@ namespace MorrowindPipBoySetup
             ShowPage(0);
 
             FormClosed += (s, e) => Cleanup();
+            ResumeLayout(true);
         }
 
         void Cleanup()
@@ -146,6 +159,69 @@ namespace MorrowindPipBoySetup
             {
                 string p = Path.Combine(lib, @"steamapps\common", name);
                 if (Directory.Exists(p)) return p;
+            }
+            return "";
+        }
+
+        // ---- OpenMW detection -----------------------------------------------
+        static string FindOpenMW()
+        {
+            // 1. Registry uninstall entries
+            foreach (string hive in new[] {
+                @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+                @"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall" })
+            {
+                try
+                {
+                    using (var root = Registry.LocalMachine.OpenSubKey(hive))
+                    {
+                        if (root == null) continue;
+                        foreach (string sub in root.GetSubKeyNames())
+                        {
+                            try
+                            {
+                                using (var k = root.OpenSubKey(sub))
+                                {
+                                    if (k == null) continue;
+                                    string dn  = k.GetValue("DisplayName")     as string ?? "";
+                                    string loc = k.GetValue("InstallLocation") as string ?? "";
+                                    if (dn.IndexOf("OpenMW", StringComparison.OrdinalIgnoreCase) >= 0
+                                        && loc.Length > 0)
+                                    {
+                                        loc = loc.TrimEnd('\\');
+                                        if (File.Exists(Path.Combine(loc, "openmw.exe")))
+                                            return loc;
+                                    }
+                                }
+                            }
+                            catch { }
+                        }
+                    }
+                }
+                catch { }
+            }
+
+            // 2. Common install paths on every drive letter
+            string[] candidates = {
+                @"Program Files\OpenMW 0.50.0",
+                @"Program Files\OpenMW 0.50",
+                @"Program Files\OpenMW",
+                @"Program Files (x86)\OpenMW 0.50.0",
+                @"Program Files (x86)\OpenMW 0.50",
+                @"Program Files (x86)\OpenMW",
+                @"OpenMW 0.50.0",
+                @"OpenMW 0.50",
+                @"OpenMW",
+            };
+            foreach (var drive in System.IO.DriveInfo.GetDrives())
+            {
+                if (drive.DriveType != System.IO.DriveType.Fixed) continue;
+                foreach (string rel in candidates)
+                {
+                    string p = Path.Combine(drive.RootDirectory.FullName, rel);
+                    if (File.Exists(Path.Combine(p, "openmw.exe")))
+                        return p;
+                }
             }
             return "";
         }
@@ -266,20 +342,21 @@ namespace MorrowindPipBoySetup
 
             pgPaths.Controls.Add(SectionLabel("Installation Paths", ref y));
             pgPaths.Controls.Add(InfoBox(
-                "Fallout 4 and Morrowind were detected from your Steam installation. " +
-                "Browse to correct any path. OpenMW must be located manually.",
+                "Fallout 4 and Morrowind are detected from your Steam installation. " +
+                "OpenMW is detected from the registry or common install locations. " +
+                "Browse to correct any path that wasn't found automatically.",
                 ref y, 40));
 
             y += 8;
 
             pgPaths.Controls.Add(FieldLabel("Fallout 4 install folder:", y)); y += 20;
-            txtFO4 = PathRow(pgPaths, y, "Fallout 4", "Fallout4.exe"); y += 32;
+            txtFO4 = PathRow(pgPaths, y, FindSteamGame("Fallout 4"), "Fallout4.exe"); y += 32;
 
             pgPaths.Controls.Add(FieldLabel("Morrowind install folder:", y)); y += 20;
-            txtMorrowind = PathRow(pgPaths, y, "Morrowind", @"Data Files\Morrowind.esm"); y += 32;
+            txtMorrowind = PathRow(pgPaths, y, FindSteamGame("Morrowind"), @"Data Files\Morrowind.esm"); y += 32;
 
             pgPaths.Controls.Add(FieldLabel("OpenMW 0.50 install folder (containing openmw.exe):", y)); y += 20;
-            txtOpenMW = PathRow(pgPaths, y, null, "openmw.exe"); y += 32;
+            txtOpenMW = PathRow(pgPaths, y, FindOpenMW(), "openmw.exe"); y += 32;
 
             pgPaths.Controls.Add(InfoBox(
                 "Note: Paths containing spaces may cause issues. " +
@@ -289,12 +366,12 @@ namespace MorrowindPipBoySetup
             mainContent.Controls.Add(pgPaths);
         }
 
-        TextBox PathRow(Panel parent, int y, string steamGameName, string validateFile)
+        TextBox PathRow(Panel parent, int y, string initialPath, string validateFile)
         {
             var tb = new TextBox {
                 Location = new Point(0, y), Size = new Size(400, 22),
                 Font = new Font("Segoe UI", 9f),
-                Text = steamGameName != null ? FindSteamGame(steamGameName) : ""
+                Text = initialPath ?? ""
             };
             var btn = new Button {
                 Text = "Browse...", Location = new Point(406, y - 1),

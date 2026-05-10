@@ -12,6 +12,7 @@ copied as-is into the appropriate locations.
 | `userdata\settings.cfg` | `Documents\My Games\OpenMW\settings.cfg` | Initial resolution and display settings (876×700, no cursor, no fullscreen) |
 | `userdata\input_v3.xml` | `Documents\My Games\OpenMW\input_v3.xml` | Input bindings — customised so keyboard/mouse pass through to the Pip-Boy bridge correctly |
 | `userdata\shaders.yaml` | `Documents\My Games\OpenMW\shaders.yaml` | Shader toggle state |
+| `userdata\data\scripts\omw\combat\local.lua` | `Documents\My Games\OpenMW\data\scripts\omw\combat\local.lua` | Patched combat script — guards against missing Blood_Model/Blood_Texture GMSTs so Actor._onHit runs and damage is applied |
 | `pipboy_config\settings.cfg` | `Documents\My Games\OpenMW\settings.cfg` (template) | Alternative settings template at 1024×1024 — the watcher overwrites this with 876×700 at each launch |
 
 ## openmw.cfg

@@ -44,6 +44,11 @@ if not exist "%HERE%InstallerExecutable\MorrowindPipBoyEdition_Setup.exe" (
     pause & exit /b 1
 )
 
+if not exist "%HERE%InstallerExecutable\MorrowindPipBoyEdition_Uninstall.exe" (
+    echo ERROR: MorrowindPipBoyEdition_Uninstall.exe not found. Run InstallerExecutable\build.bat first.
+    pause & exit /b 1
+)
+
 if not exist "%HERE%MorrowindLauncherSRC\MorrowindLauncher.dll" (
     echo ERROR: MorrowindLauncher.dll not found in MorrowindLauncherSRC\
     echo Build it on Linux first:
@@ -60,7 +65,8 @@ echo Assembling dist\ ...
 set "BUILD=%DIST%\build"
 
 REM Top-level
-xcopy /y /q "%HERE%InstallerExecutable\MorrowindPipBoyEdition_Setup.exe" "%DIST%\"
+xcopy /y /q "%HERE%InstallerExecutable\MorrowindPipBoyEdition_Setup.exe"   "%DIST%\"
+xcopy /y /q "%HERE%InstallerExecutable\MorrowindPipBoyEdition_Uninstall.exe" "%DIST%\"
 
 REM build\ root
 xcopy /y /q "%HERE%Fallout4_Config\Fallout4Custom.ini"                   "%BUILD%\"
@@ -94,6 +100,7 @@ REM build\openmw_userdata\
 xcopy /y /q "%HERE%OpenMW_Config\userdata\settings.cfg"                  "%BUILD%\openmw_userdata\"
 xcopy /y /q "%HERE%OpenMW_Config\userdata\input_v3.xml"                  "%BUILD%\openmw_userdata\"
 xcopy /y /q "%HERE%OpenMW_Config\userdata\shaders.yaml"                  "%BUILD%\openmw_userdata\"
+xcopy /y /q /s /e "%HERE%OpenMW_Config\userdata\data\*"                  "%BUILD%\openmw_userdata\data\"
 
 echo.
 echo =====================================================

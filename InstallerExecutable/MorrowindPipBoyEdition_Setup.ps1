@@ -53,6 +53,7 @@ function Step($n, $msg) {
 function OK($msg)   { Write-Host "  |  [+] $msg" -ForegroundColor Gray }
 function Warn($msg) { Write-Host "  |  [!] $msg" -ForegroundColor Gray }
 function Fail($msg) { Write-Host "  |  [X] FAILED  $msg" -ForegroundColor White; throw $msg }
+function Add-Manifest($path) { $script:manifest += $path }
 
 # ---- Steam path discovery --------------------------------------------------
 
@@ -95,8 +96,8 @@ if ($Uninstall) {
         Get-Content $manifestFile | ForEach-Object { Remove-Item $_ -Force -EA SilentlyContinue }
         OK "Files removed per manifest"
     } else { Warn "No manifest found - remove files manually" }
-    & schtasks /Delete /TN "MorrowindPipBoyEdition-StartWatcher" /F 2>$null
-    Remove-Item (Join-Path ([Environment]::GetFolderPath("Desktop")) "Morrowind PipBoy Edition Watcher.lnk") -EA SilentlyContinue
+    try { schtasks /Delete /TN "MorrowindPipBoyEdition-StartWatcher" /F 2>&1 | Out-Null } catch {}
+    Remove-Item (Join-Path ([Environment]::GetFolderPath('DesktopDirectory')) "Morrowind PipBoy Edition Watcher.lnk") -EA SilentlyContinue
     OK "Uninstall complete"
     exit 0
 }
@@ -207,6 +208,13 @@ OK "IPC dir   : C:\HolloWind"
 OK "Bridge dir: $(Split-Path $BRIDGE_FILE)"
 
 # ---------------------------------------------------------------------------
+# Manifest initialisation (tracks every file the installer writes)
+# ---------------------------------------------------------------------------
+$manifestDir  = Join-Path $env:LOCALAPPDATA "MorrowindPipBoyEdition"
+New-Item -ItemType Directory -Force $manifestDir | Out-Null
+$script:manifest = @()
+
+# ---------------------------------------------------------------------------
 # STEP 3: Deploy SDL2 capture proxy
 # ---------------------------------------------------------------------------
 Step 3 "Deploying SDL2 capture proxy"
@@ -221,8 +229,10 @@ if (-not (Test-Path $sdlProxy)) { Fail "SDL2.dll not found in: $patchDir" }
 if (-not (Test-Path $sdlOrig))  { Fail "SDL2_orig.dll not found in: $patchDir" }
 
 Copy-Item $sdlProxy (Join-Path $OpenMWPath "SDL2.dll")      -Force
+Add-Manifest (Join-Path $OpenMWPath "SDL2.dll")
 OK "SDL2.dll (capture proxy) -> $OpenMWPath"
 Copy-Item $sdlOrig  (Join-Path $OpenMWPath "SDL2_orig.dll") -Force
+Add-Manifest (Join-Path $OpenMWPath "SDL2_orig.dll")
 OK "SDL2_orig.dll           -> $OpenMWPath"
 
 # ---------------------------------------------------------------------------
@@ -234,6 +244,7 @@ Step 4 "Installing OpenMW runtime files"
 $morrowindSrc = Join-Path $BUILD_DIR "Morrowind"
 if (-not (Test-Path $morrowindSrc)) { Fail "Morrowind folder not found in $BUILD_DIR" }
 Copy-Item (Join-Path $morrowindSrc "morrowind_watcher.ps1") $MorrowindPath -Force
+Add-Manifest (Join-Path $MorrowindPath "morrowind_watcher.ps1")
 OK "morrowind_watcher.ps1 installed to $MorrowindPath"
 
 # Data Files\Video ??? goes to Morrowind install dir
@@ -241,7 +252,10 @@ $videoSrc = Join-Path $morrowindSrc "Data Files\Video"
 if (Test-Path $videoSrc) {
     $videoDst = Join-Path $MorrowindPath "Data Files\Video"
     New-Item -ItemType Directory -Force $videoDst | Out-Null
-    Copy-Item (Join-Path $videoSrc "*") $videoDst -Force
+    Get-ChildItem $videoSrc -File | ForEach-Object {
+        Copy-Item $_.FullName (Join-Path $videoDst $_.Name) -Force
+        Add-Manifest (Join-Path $videoDst $_.Name)
+    }
     OK "Video files copied to $videoDst"
 }
 
@@ -259,8 +273,10 @@ $cfgLines = @(
     "openmw_user_data = $OMW_USER_DATA"
 )
 [System.IO.File]::WriteAllLines($PATHS_CFG, $cfgLines, [System.Text.Encoding]::ASCII)
+Add-Manifest $PATHS_CFG
 OK "hollowind_paths.cfg written to $MorrowindPath"
 [System.IO.File]::WriteAllLines((Join-Path $OpenMWPath "hollowind_paths.cfg"), $cfgLines, [System.Text.Encoding]::ASCII)
+Add-Manifest (Join-Path $OpenMWPath "hollowind_paths.cfg")
 OK "hollowind_paths.cfg written to $OpenMWPath"
 
 # Write openmw.cfg to the location OpenMW actually reads on Windows.
@@ -287,12 +303,19 @@ if (Test-Path (Join-Path $videoDir "mw_intro.bik"))      { $userCfgLines += "fal
 if (Test-Path (Join-Path $videoDir "mw_load.bik"))       { $userCfgLines += "fallback=Movies_Loading,mw_load.bik" }
 if (Test-Path (Join-Path $videoDir "mw_menu.bik"))       { $userCfgLines += "fallback=Movies_Options_Menu,mw_menu.bik" }
 [System.IO.File]::WriteAllLines((Join-Path $omwCfgDir "openmw.cfg"), $userCfgLines, [System.Text.Encoding]::ASCII)
+Add-Manifest (Join-Path $omwCfgDir "openmw.cfg")
 OK "openmw.cfg written to $omwCfgDir"
 
-# Copy bundled OpenMW user config (settings.cfg, input_v3.xml, shaders.yaml)
+# Copy bundled OpenMW user config (settings.cfg, input_v3.xml, shaders.yaml, combat patch, etc.)
 $omwUserdataDir = Join-Path $BUILD_DIR "openmw_userdata"
 if (Test-Path $omwUserdataDir) {
-    Get-ChildItem $omwUserdataDir | Copy-Item -Destination $omwCfgDir -Recurse -Force
+    Get-ChildItem $omwUserdataDir -Recurse -File | ForEach-Object {
+        $rel = $_.FullName.Substring($omwUserdataDir.Length).TrimStart('\')
+        $dst = Join-Path $omwCfgDir $rel
+        New-Item -ItemType Directory -Force (Split-Path $dst) | Out-Null
+        Copy-Item $_.FullName $dst -Force
+        Add-Manifest $dst
+    }
     OK "OpenMW user config copied to $omwCfgDir"
 } else { Warn "openmw_userdata folder not found in $BUILD_DIR - settings.cfg and keybindings not installed" }
 
@@ -301,11 +324,13 @@ $omwRuntimeDir = Join-Path $BUILD_DIR "openmw_runtime\openmw_runtime"
 if (-not (Test-Path $omwRuntimeDir)) { Fail "openmw_runtime folder not found in $BUILD_DIR" }
 
 Copy-Item (Join-Path $omwRuntimeDir "openmw.cfg") $OpenMWPath -Force
+Add-Manifest (Join-Path $OpenMWPath "openmw.cfg")
 OK "openmw.cfg deployed to $OpenMWPath"
 
 # SDL2.dll (capture proxy) was already deployed into $OpenMWPath in Step 3.
 
 Copy-Item (Join-Path $omwRuntimeDir "pipboy_config\settings.cfg") $omwCfgDir -Force
+Add-Manifest (Join-Path $omwCfgDir "settings.cfg")
 OK "Pip-Boy settings.cfg deployed to $omwCfgDir"
 
 # ---------------------------------------------------------------------------
@@ -318,6 +343,7 @@ if (-not (Test-Path $dllSrc)) { Fail "MorrowindLauncher.dll not found in $BUILD_
 OK "MorrowindLauncher.dll found ($((Get-Item $dllSrc).Length) bytes)"
 
 Copy-Item (Join-Path $patchDir "launch_openmw.exe") $MorrowindPath -Force
+Add-Manifest (Join-Path $MorrowindPath "launch_openmw.exe")
 OK "launch_openmw.exe installed to $MorrowindPath"
 
 # ---------------------------------------------------------------------------
@@ -332,7 +358,13 @@ New-Item -ItemType Directory -Force (Join-Path $fo4Data "F4SE\Plugins") | Out-Nu
 $fo4Extracted = Join-Path $BUILD_DIR "Fallout 4\Data"
 if (-not (Test-Path $fo4Extracted)) { Fail "Fallout 4\Data folder not found in $BUILD_DIR" }
 
-Get-ChildItem $fo4Extracted | Copy-Item -Destination $fo4Data -Recurse -Force
+Get-ChildItem $fo4Extracted -Recurse -File | ForEach-Object {
+    $rel = $_.FullName.Substring($fo4Extracted.Length).TrimStart('\')
+    $dst = Join-Path $fo4Data $rel
+    New-Item -ItemType Directory -Force (Split-Path $dst) | Out-Null
+    Copy-Item $_.FullName $dst -Force
+    Add-Manifest $dst
+}
 OK "FO4 mod files copied to $fo4Data"
 
 
@@ -348,6 +380,7 @@ MorrowindDataPath=$MorrowindPath\Data Files
 ; ShutdownFile: plugin writes this file to signal morrowind_watcher.ps1 to kill OpenMW
 ShutdownFile=$SHUTDOWN_FILE
 "@ | Set-Content $iniDst
+Add-Manifest $iniDst
 OK "MorrowindLauncher.ini written"
 
 # ---------------------------------------------------------------------------
@@ -402,26 +435,8 @@ if ($plugins -notcontains "*MorrowindLauncher.esp") {
 # ---------------------------------------------------------------------------
 # Save install manifest for uninstall
 # ---------------------------------------------------------------------------
-$manifestDir = Join-Path $env:LOCALAPPDATA "MorrowindPipBoyEdition"
-New-Item -ItemType Directory -Force $manifestDir | Out-Null
-
-@(
-    $PATHS_CFG,
-    (Join-Path $OpenMWPath "hollowind_paths.cfg"),
-    (Join-Path $OpenMWPath "SDL2.dll"),
-    (Join-Path $OpenMWPath "openmw.cfg"),
-    (Join-Path $MorrowindPath "morrowind_watcher.ps1"),
-    (Join-Path $MorrowindPath "launch_openmw.exe"),
-    (Join-Path $fo4Data "F4SE\Plugins\MorrowindLauncher.dll"),
-    (Join-Path $fo4Data "F4SE\Plugins\MorrowindLauncher.ini"),
-    (Join-Path $fo4Data "MorrowindLauncher.esp"),
-    (Join-Path $fo4Data "MorrowindLauncher - Main.ba2"),
-    (Join-Path $fo4Data "Interface\Programs\MorrowindDisplay.swf"),
-    (Join-Path $fo4Data "Meshes\HolloWind\MorrowindHolotape.nif"),
-    (Join-Path $fo4Data "Meshes\HolloWind\morrowindpic.nif"),
-    (Join-Path $fo4Data "Textures\HolloWind\HolotapeMorrowind01_d.dds"),
-    (Join-Path $fo4Data "Textures\SetDressing\PaintingsGeneric\PaintingGeneric02prewar_d.dds")
-) | Set-Content (Join-Path $manifestDir "install_manifest.txt")
+$script:manifest | Set-Content (Join-Path $manifestDir "install_manifest.txt")
+OK "Install manifest saved: $($script:manifest.Count) files tracked"
 
 # Store OpenMW path so uninstaller can restore SDL2
 Set-Content (Join-Path $manifestDir "openmw_path.txt") $OpenMWPath
